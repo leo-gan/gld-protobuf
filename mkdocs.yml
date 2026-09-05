@@ -1,0 +1,21 @@
+site_name: mojo-protobuf
+site_description: From-scratch Protocol Buffers serializer for Mojo
+site_url: https://leo-gan.github.io/gld-protobuf/
+repo_url: https://github.com/leo-gan/gld-protobuf
+repo_name: leo-gan/gld-protobuf
+copyright: MIT
+
+theme:
+  name: mkdocs
+
+nav:
+  - Home: index.md
+  - Why ProtoBuf: why-protobuf.md
+  - Instructions: instructions.md
+  - Examples: examples.md
+
+markdown_extensions:
+  - tables
+  - fenced_code
+  - toc:
+      permalink: true
