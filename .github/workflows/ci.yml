@@ -17,8 +17,6 @@ jobs:
       - uses: prefix-dev/setup-pixi@v0.10.1
         with:
           cache: true
-          auth-host: conda.modular.com
-          auth-token: ${{ secrets.PREFIX_API_KEY }}
       - name: Run tests
         run: pixi run test
         env:
