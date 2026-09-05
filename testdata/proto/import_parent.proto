@@ -1,0 +1,8 @@
+syntax = "proto3";
+package imp.parent;
+
+import public "import_child.proto";
+
+message Parent {
+  imp.child.Child c = 1;
+}

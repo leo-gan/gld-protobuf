@@ -1,0 +1,6 @@
+syntax = "proto3";
+package imp.child;
+
+message Child {
+  int32 n = 1;
+}

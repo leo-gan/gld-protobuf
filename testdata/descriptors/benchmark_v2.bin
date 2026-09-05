@@ -1,0 +1,55 @@
+
+Ó	
+benchmark_v2.protobenchmark.v2"Þ
+Message
+f_bool (RfBool
+f_int32 (RfInt32
+f_int64 (RfInt64
+	f_float64 (RfFloat64
+f_string (	RfString
+f_bool_2 (RfBool2
+	f_int32_2 (RfInt322
+
+f_string_2 (	RfString2";
+BatchMessage+
+items (2.benchmark.v2.MessageRitems"@
+DocumentMeta
+region (	Rregion
+version (Rversion"S
+DocumentItem
+sku (	Rsku
+qty (Rqty
+price_minor (R
+priceMinor"”
+Document
+id (	Rid
+status (Rstatus.
+meta (2.benchmark.v2.DocumentMetaRmeta0
+items (2.benchmark.v2.DocumentItemRitems"=
+BatchDocument,
+items (2.benchmark.v2.DocumentRitems"_
+	Telemetry
+source (	Rsource
+ts (Rts
+tags (	Rtags
+values (Rvalues"?
+BatchTelemetry-
+items (2.benchmark.v2.TelemetryRitems"
+Strings
+items (	Ritems";
+BatchStrings+
+items (2.benchmark.v2.StringsRitems"3
+	EventAttr
+key (	Rkey
+value (	Rvalue"­
+Event
+event_id (	ReventId
+
+event_type (	R	eventType
+occurred_at (R
+occurredAt
+producer (	Rproducer-
+attrs (2.benchmark.v2.EventAttrRattrs"7
+
+BatchEvent)
+items (2.benchmark.v2.EventRitemsbproto3

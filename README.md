@@ -13,9 +13,8 @@ This repository is a standalone library. It is not part of any other project.
 
 ## Status
 
-Phase 0 (wire format) is implemented: varint / ZigZag / tags, `WireReader` /
-`WireWriter`, `ProtoMessage`, and hand-written test messages. Code generation
-from `.proto` files is a later phase. See [DESIGN.md](DESIGN.md).
+Phase 0 (wire format) and Phase 1 (`FileDescriptorSet` decoder) are implemented.
+Code generation from `.proto` files is the next phase. See [DESIGN.md](DESIGN.md).
 
 Requires **Mojo 1.0.0**.
 
