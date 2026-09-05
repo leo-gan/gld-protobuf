@@ -13,9 +13,18 @@ This repository is a standalone library. It is not part of any other project.
 
 Documentation: [Why ProtoBuf](https://leo-gan.github.io/gld-protobuf/why-protobuf/),
 [Instructions](https://leo-gan.github.io/gld-protobuf/instructions/),
-[Examples](https://leo-gan.github.io/gld-protobuf/examples/).
+[Examples](https://leo-gan.github.io/gld-protobuf/examples/),
+[Test data](https://leo-gan.github.io/gld-protobuf/test-data/).
 
 ## Install
+
+Published package (linux-64) on [prefix.dev/leo-gan/leo-gan](https://prefix.dev/leo-gan/leo-gan):
+
+```bash
+pixi add --channel https://prefix.dev/leo-gan/leo-gan mojo-protobuf
+```
+
+That installs `protobuf.mojoc` (plus `wire` / `runtime`) and `gld-protoc-mojo`. It needs `mojo-compiler` 1.0. After install, `from protobuf import …` resolves with no extra `-I`.
 
 From a git checkout (development):
 
@@ -26,25 +35,16 @@ pixi install
 pixi run test
 ```
 
-To consume the library as precompiled packages plus the codegen CLI:
+Local precompile (no conda install):
 
 ```bash
 pixi run precompile          # writes /tmp/mojo-protobuf-pkg/{protobuf,wire,runtime}.mojoc
                              # and gld-protoc-mojo
 ```
 
-`from protobuf import …` then resolves from that directory (`mojo run -I /tmp/mojo-protobuf-pkg …`) or, after a conda install, from `$PREFIX/lib/mojo/` with no extra `-I`.
+`from protobuf import …` then resolves from that directory (`mojo run -I /tmp/mojo-protobuf-pkg …`).
 
-The conda recipe is `conda.recipe/recipe.yaml` (package name `mojo-protobuf`, pin `mojo-compiler ==1.0.0`). Build with [rattler-build](https://prefix-dev.github.io/rattler-build/):
-
-```bash
-rattler-build build \
-  --recipe conda.recipe/recipe.yaml \
-  -c conda-forge \
-  -c https://conda.modular.com/max
-```
-
-That install puts `protobuf.mojoc` (and `wire` / `runtime`) in `$PREFIX/lib/mojo/` and `gld-protoc-mojo` on `PATH`.
+The recipe is `conda.recipe/recipe.yaml`. A GitHub Release on this repo builds it and uploads it to the channel above.
 
 ## Status
 

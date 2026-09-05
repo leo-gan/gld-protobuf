@@ -17,6 +17,9 @@ __pycache__/
 # MkDocs
 site/
 
+# rattler-build
+output/
+
 # Editors / OS
 .idea/
 .vscode/

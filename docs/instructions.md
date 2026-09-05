@@ -8,6 +8,18 @@ the tests. The runtime needs **Mojo 1.0.0**. Code generation also needs
 
 ## Install
 
+Published package (linux-64):
+
+```bash
+pixi add --channel https://prefix.dev/leo-gan/leo-gan mojo-protobuf
+```
+
+The channel is [prefix.dev/leo-gan/leo-gan](https://prefix.dev/leo-gan/leo-gan). The package name is `mojo-protobuf`. It needs `mojo-compiler` 1.0. After install, `from protobuf import …` resolves with no extra `-I`, and `gld-protoc-mojo` is on `PATH`.
+
+A GitHub Release on this repository builds `conda.recipe/recipe.yaml` and uploads that package. Do not publish from a pull request or from every push to `main`.
+
+### From a git checkout
+
 1. Install [pixi](https://pixi.sh/).
 2. Clone the repository and install the environment:
 
@@ -27,7 +39,7 @@ pixi run mojo --version   # expect Mojo 1.0.0
 For codegen, install `protoc` (the `protobuf-compiler` package on Debian and
 Ubuntu, or any 3.21+ release).
 
-### Precompiled package
+### Local precompile
 
 `pixi run precompile` writes `wire.mojoc`, `runtime.mojoc`, `protobuf.mojoc`,
 and the `gld-protoc-mojo` binary (default output `/tmp/mojo-protobuf-pkg`).
@@ -115,6 +127,7 @@ That runs every `tests/test_*.mojo` file with `-I src -I tests -I tests/generate
 Golden byte files under `testdata/golden/` come from
 `python3 scripts/gen_golden.py` (official `protoc --encode` and Python
 varint helpers). Re-run that script if you change a test `.proto` file.
+What each testdata file is for is listed on [Test data](test-data.md).
 
 ---
 
@@ -129,8 +142,22 @@ Pushes to `main` also run `.github/workflows/pages.yml`, which publishes this
 site to GitHub Pages.
 
 If the Modular channel requires a token in Actions, add a repository secret
-named `PREFIX_API_KEY`. The test job passes it through as an environment
-variable.
+named `PREFIX_API_KEY`. The test job and the publish job pass it through as
+an environment variable when resolving `mojo-compiler`.
+
+### Publish
+
+`.github/workflows/publish.yml` runs when a GitHub Release is published
+(and can be started by hand). It builds `conda.recipe/recipe.yaml` and
+uploads `mojo-protobuf` to [prefix.dev/leo-gan/leo-gan](https://prefix.dev/leo-gan/leo-gan).
+
+One-time channel setup: in the prefix.dev channel, under **Settings →
+Repository access**, allow GitHub `leo-gan/gld-protobuf`, workflow
+`publish.yml`, environment `prefix.dev`, access **Read/write**. Upload uses
+OIDC (`id-token: write`). It does not store a prefix.dev API key in the
+repository.
+
+---
 
 ## Conformance
 

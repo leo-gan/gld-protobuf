@@ -37,8 +37,9 @@ tests:
         - test_import.mojo
 
 about:
-  homepage: https://github.com/leo-gan/gld-protobuf
+  homepage: https://leo-gan.github.io/gld-protobuf/
   repository: https://github.com/leo-gan/gld-protobuf
+  documentation: https://leo-gan.github.io/gld-protobuf/
   license: MIT
   license_file: LICENSE
   summary: From-scratch Protocol Buffers library for Mojo
@@ -46,8 +47,7 @@ about:
     Runtime and code generator written in Mojo. Does not wrap libprotobuf
     or any other C, C++, or Rust protobuf library. The package installs
     protobuf.mojoc (plus wire/runtime) and the gld-protoc-mojo CLI.
-  extra:
-    maintainers:
-      - leo-gan
-    recipe-maintainers:
-      - leo-gan
+
+extra:
+  recipe-maintainers:
+    - leo-gan

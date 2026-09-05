@@ -1,7 +1,8 @@
 # Examples
 
 These examples use the generated `benchmark.v2` types. Generate them with
-`pixi run generate` if `tests/generated/` is missing.
+`pixi run generate` if `tests/generated/` is missing. The schemas and oracle
+bytes behind those types are listed on [Test data](test-data.md).
 
 ---
 
