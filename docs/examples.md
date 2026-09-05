@@ -3,6 +3,8 @@
 These examples use the generated `benchmark.v2` types. Generate them with
 `pixi run generate` if `tests/generated/` is missing.
 
+---
+
 ## Encode and decode a `Message`
 
 `examples/encode_message.mojo`:
@@ -43,6 +45,8 @@ A fuller value (`f_bool=true`, `f_int32=150`, `f_int64=1`, `f_float64=1.5`,
 Zero, `false`, and empty strings are omitted. That is proto3 implicit
 presence.
 
+---
+
 ## Empty present submessage
 
 A set-but-empty nested message is not omitted. `Document.meta` is field 3.
@@ -64,6 +68,8 @@ def main() raises:
 Official Python emits the same `1a 00`. A second LEN record for field 3
 **merges** into the existing `DocumentMeta`; it does not replace it.
 
+---
+
 ## Packed `repeated double`
 
 `Telemetry.values` encodes as one packed LEN (field 4, tag `22`).
@@ -84,6 +90,8 @@ def main() raises:
 The decoder also accepts **unpacked** `I64` records for the same field. Both
 forms are legal proto3. Generated encode always writes packed.
 
+---
+
 ## Interop with `protoc`
 
 ```bash
@@ -94,6 +102,10 @@ printf 'f_bool: true f_int32: 150 f_string: "hi"\n' \
 python3 tests_interop/decode_ref.py benchmark.v2.Message < message.bin
 ```
 
-Those scripts call `protoc --encode` and `protoc --decode`. The pipe is raw
-protobuf bytes. There is no length prefix. The official conformance runner
-uses a 4-byte little-endian length prefix; do not mix the two.
+Those scripts call `protoc --encode` and `protoc --decode`.
+
+!!! warning "No length prefix"
+
+    The pipe is raw protobuf bytes. There is no length prefix. The official
+    conformance runner uses a 4-byte little-endian length prefix; do not mix
+    the two.
