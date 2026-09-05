@@ -48,9 +48,9 @@ other C, C++, or Rust protobuf library.
 | Implicit presence | proto3 scalars omit zero, `false`, and empty string on encode. |
 | Nested presence | A set-but-empty nested message is written as tag plus length 0. Official Python does the same. |
 | Packed repeated | Encode writes one LEN record. Decode also accepts the older unpacked form. |
-| Unknown fields | v0.1 skips and drops them on re-encode. Official proto3 libraries preserve them. |
+| Unknown fields | Generated types keep unknown records and write them back. `--unknown skip` is opt-in. |
 | Interop | Golden vectors come from official `protoc --encode`. `tests_interop/` pipes the same bytes. |
-| v0.1 types | `bool`, `int32`, `int64`, `double`, `string`, nested messages, packed `repeated double`. |
+| proto3 types | All proto3 scalars, enums, nested messages, packed and unpacked repeated, `oneof`, `map`, proto3 `optional`. |
 
 `protoc` is a **build-time** host tool. Python `google.protobuf` is a **test
 oracle**. Neither is required to encode or decode at runtime.

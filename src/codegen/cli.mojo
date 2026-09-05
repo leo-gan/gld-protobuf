@@ -11,7 +11,7 @@ from descriptor.model import FileDescSet, proto3_error
 def _usage() -> String:
     return (
         "gld-protoc-mojo --out DIR [--descriptor-set FILE | --proto FILE ...] "
-        "[--proto-path DIR] [--module-prefix P] [--protoc BIN] [--unknown skip]"
+        "[--proto-path DIR] [--module-prefix P] [--protoc BIN] [--unknown preserve|skip]"
     )
 
 
@@ -20,11 +20,25 @@ def _arg_eq(a: String, b: String) -> Bool:
 
 
 def _mkdir_p(path: String) raises:
+    if path.byte_length() == 0 or path == ".":
+        return
     var args = List[String]()
     args.append("-p")
     args.append(path)
     var proc = Process.run("mkdir", args)
     _ = proc.wait()
+
+
+def _is_under(path: String, root: String) -> Bool:
+    if path == root:
+        return True
+    var prefix = root + "/"
+    if path.byte_length() < prefix.byte_length():
+        return False
+    for i in range(prefix.byte_length()):
+        if path.as_bytes()[i] != prefix.as_bytes()[i]:
+            return False
+    return True
 
 
 def _parent_dir(path: String) raises -> String:
@@ -96,7 +110,7 @@ def main() raises:
     var module_prefix = String()
     var descriptor_set = String()
     var protoc = String("protoc")
-    var unknown = String("skip")
+    var unknown = String("preserve")
     var proto_paths = List[String]()
     var protos = List[String]()
     var i = 1
@@ -135,11 +149,13 @@ def main() raises:
 
     if out_dir.byte_length() == 0:
         raise Error("--out is required\n" + _usage())
-    if unknown != "skip":
-        raise Error("v0.1 only supports --unknown skip")
-    print(
-        "warning: --unknown skip deviates from official proto3 (unknown fields are dropped)"
-    )
+    if unknown != "skip" and unknown != "preserve":
+        raise Error("--unknown must be preserve or skip\n" + _usage())
+    if unknown == "skip":
+        print(
+            "warning: --unknown skip deviates from official proto3 (unknown fields are dropped)"
+        )
+    var preserve = unknown == "preserve"
 
     var blob: List[Byte]
     if descriptor_set.byte_length() != 0:
@@ -161,9 +177,6 @@ def main() raises:
     for pi in range(len(protos)):
         emit_names.append(_basename(protos[pi]))
 
-    var exported = List[String]()
-    var export_dir = String()
-    var last_stem = String()
     for fi in range(len(set.files)):
         var file = set.files[fi].copy()
         var should = len(emit_names) == 0
@@ -174,29 +187,50 @@ def main() raises:
             continue
         var body: String
         try:
-            body = emit_file(set, file.copy())
+            body = emit_file(set, file.copy(), preserve)
         except e:
             raise Error(e.message)
         var stem = stem_of(file.name)
         var path = output_path(out_dir, module_prefix, file.package, stem)
         _write_text(path, body)
-        export_dir = _parent_dir(path)
-        last_stem = stem
+        var exported = List[String]()
+        for ei in range(len(file.enums)):
+            var en = mojo_type_name(file.enums[ei].name)
+            exported.append(en)
+            for vi in range(len(file.enums[ei].values)):
+                exported.append(en + "_" + file.enums[ei].values[vi].name)
         for mi in range(len(file.messages)):
+            if file.messages[mi].map_entry:
+                continue
             exported.append(mojo_type_name(file.messages[mi].dotted_name()))
-
-    if export_dir.byte_length() != 0 and len(exported) != 0:
-        var text = String("from .") + last_stem + " import (\n"
-        for i in range(len(exported)):
-            text += "    " + exported[i]
-            if i + 1 != len(exported):
-                text += ","
-            text += "\n"
-        text += ")\n"
-        _write_text(export_dir + "/__init__.mojo", text)
-        var pkg_dir = _parent_dir(export_dir)
-        if pkg_dir != out_dir and pkg_dir != ".":
-            _write_text(pkg_dir + "/__init__.mojo", "")
-            var top = _parent_dir(pkg_dir)
-            if top != out_dir and top != ".":
-                _write_text(top + "/__init__.mojo", "")
+            for nj in range(len(file.messages[mi].enums)):
+                var nen = mojo_type_name(
+                    file.messages[mi].dotted_name()
+                    + "."
+                    + file.messages[mi].enums[nj].name
+                )
+                exported.append(nen)
+                for vi in range(len(file.messages[mi].enums[nj].values)):
+                    exported.append(
+                        nen + "_" + file.messages[mi].enums[nj].values[vi].name
+                    )
+        var export_dir = _parent_dir(path)
+        if (
+            export_dir.byte_length() != 0
+            and export_dir != out_dir
+            and len(exported) != 0
+        ):
+            var text = String("from .") + stem + " import (\n"
+            for i in range(len(exported)):
+                text += "    " + exported[i]
+                if i + 1 != len(exported):
+                    text += ","
+                text += "\n"
+            text += ")\n"
+            _write_text(export_dir + "/__init__.mojo", text)
+            var pkg_dir = _parent_dir(export_dir)
+            if pkg_dir != out_dir and pkg_dir != "." and _is_under(pkg_dir, out_dir):
+                _write_text(pkg_dir + "/__init__.mojo", "")
+                var top = _parent_dir(pkg_dir)
+                if top != out_dir and top != "." and _is_under(top, out_dir):
+                    _write_text(top + "/__init__.mojo", "")

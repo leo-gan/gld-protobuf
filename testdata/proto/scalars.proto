@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package scalars;
+
+enum Color {
+  COLOR_UNSPECIFIED = 0;
+  RED = 1;
+  BLUE = 2;
+}
+
+message Scalars {
+  uint32 u32 = 1;
+  uint64 u64 = 2;
+  sint32 s32 = 3;
+  sint64 s64 = 4;
+  fixed32 fx32 = 5;
+  fixed64 fx64 = 6;
+  sfixed32 sfx32 = 7;
+  sfixed64 sfx64 = 8;
+  float f32 = 9;
+  bytes data = 10;
+  Color color = 11;
+  repeated sint32 packed_s32 = 12;
+  repeated sint32 unpacked_s32 = 13 [packed = false];
+  optional int32 maybe = 14;
+}

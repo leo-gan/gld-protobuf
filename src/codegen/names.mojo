@@ -47,6 +47,7 @@ def _reserved() -> List[String]:
         String("WireType"),
         String("DecodeError"),
         String("UnknownFieldSet"),
+        String("unknown"),
         String("encode"),
         String("decode"),
         String("encoded_len"),

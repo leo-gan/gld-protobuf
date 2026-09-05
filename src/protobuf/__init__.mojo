@@ -1,5 +1,6 @@
 from runtime.error import DecodeError
 from runtime.message import ProtoMessage, decode, encode
+from runtime.unknown import UNKNOWN_PRESERVE_DEFAULT, UnknownFieldSet
 from wire.reader import WireReader
 from wire.size import (
     i32_to_u64,
