@@ -11,6 +11,10 @@ byte vectors. Neither is required to encode or decode at runtime.
 
 This repository is a standalone library. It is not part of any other project.
 
+Documentation: [Why ProtoBuf](https://leo-gan.github.io/gld-protobuf/why-protobuf/),
+[Instructions](https://leo-gan.github.io/gld-protobuf/instructions/),
+[Examples](https://leo-gan.github.io/gld-protobuf/examples/).
+
 ## Status
 
 Phases 0–2 are implemented: wire format, `FileDescriptorSet` decoder, and
@@ -26,8 +30,8 @@ Requires **Mojo 1.0.0**.
 
 ```text
 src/wire/         # Layer 1: wire primitives
-src/descriptor/   # Layer 2: FileDescriptorSet decoder (later)
-src/codegen/      # Layer 3: gld-protoc-mojo (later)
+src/descriptor/   # Layer 2: FileDescriptorSet decoder
+src/codegen/      # Layer 3: gld-protoc-mojo
 src/runtime/      # Layer 4: ProtoMessage, DecodeError
 src/protobuf/     # public facade (`from protobuf import …`)
 ```
