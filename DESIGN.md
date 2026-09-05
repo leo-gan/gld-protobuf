@@ -32,6 +32,7 @@ Mojo 1.0 shipped on 2026-08-11 (Modular 26.5) with source stability, ownership, 
 
 - Phase 0 (wire + hand-written test messages) is implemented.
 - Phase 1 (`FileDescriptorSet` decoder) is implemented in `src/descriptor/`.
+- Phase 2 (`gld-protoc-mojo`) is implemented in `src/codegen/`.
 - `temp/impl_plan.md` is gitignored local scratch, not a shipped artifact.
 - Test message types live in `testdata/proto/`. This library does not depend on any other repository.
 
@@ -1240,6 +1241,7 @@ PRs land in `/home/leo/PycharmProjects/GLD/gld-protobuf` unless noted. Each is i
 
 #### PR 7 — `gld-protoc-mojo` for the v2 type set
 
+- **Status:** implemented (Phase 2 PR)
 - **Title:** `feat(codegen): emit Mojo for proto3 messages used by benchmark.v2`
 - **Files:** `src/codegen/{names,emit,cli}.mojo`, `tests/test_codegen_names.mojo`, `scripts/generate.sh`.
 - **Depends on:** PR 5, PR 6.
@@ -1247,6 +1249,7 @@ PRs land in `/home/leo/PycharmProjects/GLD/gld-protobuf` unless noted. Each is i
 
 #### PR 8 — Generate `benchmark.v2` (0.1.0 test-message gate)
 
+- **Status:** implemented (Phase 2 PR)
 - **Title:** `feat: generate benchmark.v2 test messages and pass round-trips`
 - **Files:** `testdata/proto/benchmark_v2.proto` (this repo’s test messages), `tests/generated/benchmark/v2/{__init__,benchmark_v2}.mojo`, `tests/test_benchmark_v2.mojo`, `scripts/check-generated.sh`.
 - **Depends on:** PR 7.
@@ -1254,6 +1257,7 @@ PRs land in `/home/leo/PycharmProjects/GLD/gld-protobuf` unless noted. Each is i
 
 #### PR 9 — Interop shell harness
 
+- **Status:** implemented (Phase 2 PR)
 - **Title:** `test: Mojo ↔ official Python interop via pipes`
 - **Files:** `tests_interop/{encode_ref.py,decode_ref.py,interop.sh}`.
 - **Depends on:** PR 8.
@@ -1261,6 +1265,7 @@ PRs land in `/home/leo/PycharmProjects/GLD/gld-protobuf` unless noted. Each is i
 
 #### PR 10 — Examples
 
+- **Status:** implemented (Phase 2 PR)
 - **Title:** `docs: add examples/encode_message.mojo`
 - **Files:** `examples/encode_message.mojo`.
 - **Depends on:** PR 8.

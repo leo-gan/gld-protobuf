@@ -12,3 +12,4 @@ mojo = "==1.0.0"
 [tasks]
 test = "bash scripts/run-tests.sh"
 golden = "python3 scripts/gen_golden.py"
+generate = "bash scripts/generate.sh"
