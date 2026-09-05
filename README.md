@@ -13,8 +13,12 @@ This repository is a standalone library. It is not part of any other project.
 
 ## Status
 
-Phase 0 (wire format) and Phase 1 (`FileDescriptorSet` decoder) are implemented.
-Code generation from `.proto` files is the next phase. See [DESIGN.md](DESIGN.md).
+Phases 0–2 are implemented: wire format, `FileDescriptorSet` decoder, and
+`gld-protoc-mojo` for the v0.1 proto3 subset. See [DESIGN.md](DESIGN.md).
+
+```bash
+pixi run generate    # testdata/proto/benchmark_v2.proto → tests/generated/
+```
 
 Requires **Mojo 1.0.0**.
 
