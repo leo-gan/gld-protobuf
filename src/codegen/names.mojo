@@ -162,6 +162,50 @@ def _remainder_after(rest: String, pkg_len: Int) raises -> String:
     return slice_bytes(rest, pkg_len + 1, rest.byte_length())
 
 
+def safe_stem(path: String) raises -> String:
+    var st = file_stem(path)
+    if is_keyword(st) or _in_list(_reserved(), st):
+        return st + "_"
+    return st
+
+
+def file_stem(path: String) raises -> String:
+    var start = 0
+    var end = path.byte_length()
+    for i in range(path.byte_length()):
+        if byte_at(path, i) == Byte(ord("/")):
+            start = i + 1
+    if end >= 6:
+        var looks = True
+        var suf = String(".proto")
+        for i in range(6):
+            if byte_at(path, end - 6 + i) != suf.as_bytes()[i]:
+                looks = False
+        if looks:
+            end = end - 6
+    return slice_bytes(path, start, end)
+
+
+def _file_has_type(file: FileDesc, rem: String) raises -> Bool:
+    if rem.byte_length() == 0:
+        return False
+    for i in range(len(file.enums)):
+        if file.enums[i].name == rem:
+            return True
+    for i in range(len(file.messages)):
+        if file.messages[i].dotted_name() == rem:
+            return True
+        if flatten_nested(file.messages[i].dotted_name()) == rem:
+            return True
+        for j in range(len(file.messages[i].enums)):
+            var en = file.messages[i].dotted_name() + "." + file.messages[i].enums[j].name
+            if en == rem or flatten_nested(en) == rem:
+                return True
+            if file.messages[i].enums[j].name == rem:
+                return True
+    return False
+
+
 def resolve_type_name(
     set: FileDescSet, current_file: String, type_name: String
 ) raises -> ResolvedType:
@@ -176,6 +220,11 @@ def resolve_type_name(
     var best_len = -1
     for i in range(len(set.files)):
         var n = _package_prefix_len(set.files[i].package, rest)
+        if n < 0:
+            continue
+        var rem = _remainder_after(rest, n)
+        if not _file_has_type(set.files[i], rem):
+            continue
         if n > best_len:
             best_len = n
             best_i = i
@@ -192,6 +241,6 @@ def resolve_type_name(
         if set.files[best_i].package.byte_length() != 0:
             result.import_pkg = set.files[best_i].package
         else:
-            result.import_pkg = defining
+            result.import_pkg = file_stem(defining)
     result.ok = True
     return result^

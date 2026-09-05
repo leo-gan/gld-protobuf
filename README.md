@@ -17,9 +17,10 @@ Documentation: [Why ProtoBuf](https://leo-gan.github.io/gld-protobuf/why-protobu
 
 ## Status
 
-Phases 0–3 are implemented: wire format, `FileDescriptorSet` decoder,
-`gld-protoc-mojo` for proto3 messages (scalars, enums, `oneof`, maps), and
-unknown-field preservation by default. See [DESIGN.md](DESIGN.md).
+Phases 0–4 are implemented: wire format, `FileDescriptorSet` decoder,
+`gld-protoc-mojo` for proto3 messages (scalars, enums, `oneof`, maps),
+unknown-field preservation, and a binary `conformance_test_runner` adapter.
+See [DESIGN.md](DESIGN.md).
 
 ```bash
 pixi run generate    # testdata/proto/benchmark_v2.proto → tests/generated/

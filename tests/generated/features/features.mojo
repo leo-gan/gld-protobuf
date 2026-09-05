@@ -126,7 +126,7 @@ struct Holder(
                         map_val = u64_to_i32(inner.read_varint())
                     else:
                         inner.skip_field(ew)
-                self.attrs[map_key] = map_val
+                self.attrs[map_key] = map_val^
             elif field == 4 and wire == WireType.LEN:
                 var inner = dec.subreader(dec.read_len_span())
                 var map_key = Int32(0)
@@ -141,7 +141,7 @@ struct Holder(
                         map_val = inner.read_string()
                     else:
                         inner.skip_field(ew)
-                self.labels[map_key] = map_val
+                self.labels[map_key] = map_val^
             else:
                 self.unknown.add(field, wire, dec)
 

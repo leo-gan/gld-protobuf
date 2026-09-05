@@ -120,6 +120,21 @@ If the Modular channel requires a token in Actions, add a repository secret
 named `PREFIX_API_KEY`. The test job passes it through as an environment
 variable.
 
+## Conformance
+
+`conformance/adapter.mojo` speaks the official runner protocol: a
+little-endian `uint32` length, then a `ConformanceRequest`. It handles
+**binary proto3** `TestAllTypesProto3` only. JSON, text, JSPB, proto2, and
+editions are skipped.
+
+```bash
+pixi run generate
+conformance/run.sh   # no-op unless conformance_test_runner is on PATH
+```
+
+Set `CONFORMANCE_TEST_RUNNER` to the official binary to run the suite.
+Known limits are listed in `conformance/failures.txt`.
+
 To serve the site locally:
 
 ```bash

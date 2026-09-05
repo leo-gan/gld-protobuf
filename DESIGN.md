@@ -34,6 +34,7 @@ Mojo 1.0 shipped on 2026-08-11 (Modular 26.5) with source stability, ownership, 
 - Phase 1 (`FileDescriptorSet` decoder) is implemented in `src/descriptor/`.
 - Phase 2 (`gld-protoc-mojo`) is implemented in `src/codegen/`.
 - Phase 3 (remaining scalars, enums, `oneof`, maps, unknown preserve default) is implemented.
+- Phase 4 (official binary conformance adapter, uint32 LE framing) is implemented.
 - `temp/impl_plan.md` is gitignored local scratch, not a shipped artifact.
 - Test message types live in `testdata/proto/`. This library does not depend on any other repository.
 
