@@ -8,6 +8,8 @@ JSON is easier to read. Protobuf is smaller on the wire and has a single
 agreed layout across languages. That is why services that already speak
 protobuf stay on it, even when the encoder is unpleasant to write.
 
+---
+
 ## What the wire looks like
 
 Every field is a **tag** plus a **payload**. The tag is an unsigned varint:
@@ -29,6 +31,8 @@ That is the first reason the protocol is not small: the encoder must get
 varints, field numbers, and length prefixes exactly right, or another
 language’s official parser will reject the bytes.
 
+---
+
 ## Why a schema helps
 
 The `.proto` file is the contract. Field **numbers** stay stable when you
@@ -45,6 +49,8 @@ Numeric `repeated` fields are **packed** by default in proto3: one LEN
 record that holds concatenated values. A decoder must also accept the older
 unpacked form (one tag per element). Both are legal on the wire.
 
+---
+
 ## What this library does not hide
 
 Many language bindings call into C++ libprotobuf. That is a large native
@@ -59,10 +65,14 @@ There is no reflection codec. Mojo can list struct fields, but it cannot
 see protobuf field numbers or the difference between `int32` and `sint32`.
 Those facts live in the generated methods.
 
-Unknown fields are **skipped and dropped** on re-encode in v0.1. Official
-proto3 libraries preserve them. That is a documented deviation and is
-planned to change. Do not use this library as a schema-evolution proxy
-until preservation ships.
+!!! warning "Unknown fields in v0.1"
+
+    Unknown fields are **skipped and dropped** on re-encode. Official proto3
+    libraries preserve them. That is a documented deviation and is planned to
+    change. Do not use this library as a schema-evolution proxy until
+    preservation ships.
+
+---
 
 ## When to use it
 
