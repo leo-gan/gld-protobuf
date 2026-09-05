@@ -5,6 +5,7 @@ from codegen.names import (
     mojo_field_name,
     mojo_type_name,
     resolve_type_name,
+    safe_stem,
 )
 from descriptor.model import (
     EnumDesc,
@@ -73,6 +74,37 @@ def _resolve(set: FileDescSet, file: FileDesc, type_name: String) raises EmitErr
         return resolve_type_name(set, file.name, type_name)
     except _:
         raise EmitError("type_name resolve failed: " + type_name)
+
+
+def _full_name(file: FileDesc, msg: MessageDesc) -> String:
+    if file.package.byte_length() != 0:
+        return "." + file.package + "." + msg.dotted_name()
+    return "." + msg.dotted_name()
+
+
+def _message_points_at(msg: MessageDesc, type_name: String) -> Bool:
+    for i in range(len(msg.fields)):
+        if msg.fields[i].is_map:
+            continue
+        if msg.fields[i].type == TYPE_MESSAGE and msg.fields[i].type_name == type_name:
+            return True
+    return False
+
+
+def _skip_as_unknown(
+    set: FileDescSet, file: FileDesc, msg: MessageDesc, field: FieldDesc
+) -> Bool:
+    """True when a typed member would form a Mojo layout cycle (Deinitable)."""
+    if field.is_map or field.type != TYPE_MESSAGE:
+        return False
+    var self_name = _full_name(file, msg)
+    if field.type_name == self_name:
+        return True
+    try:
+        var other = _find_message(set, field.type_name)
+        return _message_points_at(other, self_name)
+    except _:
+        return False
 
 
 def _find_message(set: FileDescSet, type_name: String) raises EmitError -> MessageDesc:
@@ -723,15 +755,22 @@ def _reset_oneof(
         var f = msg.fields[i]
         if not _is_real_oneof(f):
             continue
+        if _skip_as_unknown(set, file, msg, f):
+            continue
         if f.oneof_index.value() != keep.oneof_index.value():
             continue
         if f.number == keep.number:
             continue
+        var default: String
+        if f.type == TYPE_MESSAGE:
+            default = _elem_type(set, file, f) + "()"
+        else:
+            default = _default_expr(set, file, f)
         out += (
             "                self."
             + mojo_field_name(f.name)
             + " = "
-            + _default_expr(set, file, f)
+            + default
             + "\n"
         )
     return out
@@ -770,11 +809,12 @@ def _emit_decode(
             + _default_expr(set, file, key)
             + "\n"
         )
-        out += (
-            "                var map_val = "
-            + _default_expr(set, file, val)
-            + "\n"
-        )
+        var val_zero: String
+        if val.type == TYPE_MESSAGE:
+            val_zero = _elem_type(set, file, val) + "()"
+        else:
+            val_zero = _default_expr(set, file, val)
+        out += "                var map_val = " + val_zero + "\n"
         out += "                while inner.remaining() > 0:\n"
         out += "                    var et = inner.read_tag()\n"
         out += "                    var ef = et[0]\n"
@@ -849,7 +889,7 @@ def _emit_decode(
         else:
             raise EmitError("unsupported map value type: " + field.name)
         out += "                    else:\n                        inner.skip_field(ew)\n"
-        out += "                self." + fname + "[map_key] = map_val\n"
+        out += "                self." + fname + "[map_key] = map_val^\n"
         return out
     if field.label == LABEL_REPEATED and _is_varint(field.type):
         return (
@@ -1164,7 +1204,9 @@ def _emit_eq(field: FieldDesc, fname: String) -> String:
             + fname
             + "[i]:\n                return False\n"
         )
-    if field.type == TYPE_MESSAGE or field.proto3_optional:
+    if (field.type == TYPE_MESSAGE or field.proto3_optional) and not _is_real_oneof(
+        field
+    ):
         return (
             "        if Bool(self."
             + fname
@@ -1249,6 +1291,8 @@ def emit_message(
         var wname = mojo_field_name("which_" + msg.oneofs[oneofs[i]].name)
         out += "    var " + wname + ": Int32\n"
     for i in range(len(msg.fields)):
+        if _skip_as_unknown(set, file, msg, msg.fields[i]):
+            continue
         _check_field(msg.fields[i])
         var ft = _field_type(set, file, msg.fields[i])
         if _is_real_oneof(msg.fields[i]) and msg.fields[i].type == TYPE_MESSAGE:
@@ -1267,6 +1311,8 @@ def emit_message(
         out += "        self." + wname + " = 0\n"
         inited = True
     for i in range(len(msg.fields)):
+        if _skip_as_unknown(set, file, msg, msg.fields[i]):
+            continue
         var field_ident = mojo_field_name(msg.fields[i].name)
         var default: String
         if _is_real_oneof(msg.fields[i]) and msg.fields[i].type == TYPE_MESSAGE:
@@ -1282,6 +1328,8 @@ def emit_message(
         out += "        pass\n"
     out += "\n    def encoded_len(self) -> Int:\n        var n = 0\n"
     for i in range(len(msg.fields)):
+        if _skip_as_unknown(set, file, msg, msg.fields[i]):
+            continue
         out += _emit_encoded_len(
             set, file, msg, msg.fields[i], mojo_field_name(msg.fields[i].name)
         )
@@ -1291,6 +1339,8 @@ def emit_message(
     out += "\n    def encode_to(self, mut enc: WireWriter):\n"
     var wrote = False
     for i in range(len(msg.fields)):
+        if _skip_as_unknown(set, file, msg, msg.fields[i]):
+            continue
         var chunk = _emit_encode(
             set, file, msg, msg.fields[i], mojo_field_name(msg.fields[i].name)
         )
@@ -1303,21 +1353,29 @@ def emit_message(
     if not wrote:
         out += "        pass\n"
     out += "\n    def merge_from[origin: ImmOrigin](mut self, mut dec: WireReader[origin]) raises DecodeError:\n        while dec.remaining() > 0:\n            var tag = dec.read_tag()\n            var field = tag[0]\n            var wire = tag[1]\n"
-    if len(msg.fields) == 0:
+    var decode_any = False
+    for i in range(len(msg.fields)):
+        if not _skip_as_unknown(set, file, msg, msg.fields[i]):
+            decode_any = True
+    if not decode_any:
         if preserve:
             out += "            self.unknown.add(field, wire, dec)\n"
         else:
             out += "            dec.skip_field(wire)\n"
     else:
+        var first = True
         for i in range(len(msg.fields)):
+            if _skip_as_unknown(set, file, msg, msg.fields[i]):
+                continue
             out += _emit_decode(
                 set,
                 file,
                 msg,
                 msg.fields[i],
                 mojo_field_name(msg.fields[i].name),
-                i == 0,
+                first,
             )
+            first = False
         if preserve:
             out += "            else:\n                self.unknown.add(field, wire, dec)\n"
         else:
@@ -1336,6 +1394,8 @@ def emit_message(
         )
         eq_any = True
     for i in range(len(msg.fields)):
+        if _skip_as_unknown(set, file, msg, msg.fields[i]):
+            continue
         out += _emit_eq(msg.fields[i], mojo_field_name(msg.fields[i].name))
         eq_any = True
     if preserve:
@@ -1438,7 +1498,12 @@ def output_path(out_dir: String, module_prefix: String, package: String, stem: S
             else:
                 buf.append(b)
         path += "/" + String(from_utf8=buf)
-    path += "/" + stem + ".mojo"
+    var file_stem_name: String
+    try:
+        file_stem_name = safe_stem(stem + ".proto")
+    except _:
+        file_stem_name = stem
+    path += "/" + file_stem_name + ".mojo"
     return path
 
 

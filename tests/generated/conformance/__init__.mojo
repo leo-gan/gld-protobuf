@@ -1,0 +1,20 @@
+from .conformance import (
+    WireFormat,
+    WireFormat_UNSPECIFIED,
+    WireFormat_PROTOBUF,
+    WireFormat_JSON,
+    WireFormat_JSPB,
+    WireFormat_TEXT_FORMAT,
+    TestCategory,
+    TestCategory_UNSPECIFIED_TEST,
+    TestCategory_BINARY_TEST,
+    TestCategory_JSON_TEST,
+    TestCategory_JSON_IGNORE_UNKNOWN_PARSING_TEST,
+    TestCategory_JSPB_TEST,
+    TestCategory_TEXT_FORMAT_TEST,
+    TestStatus,
+    FailureSet,
+    ConformanceRequest,
+    ConformanceResponse,
+    JspbEncodingConfig
+)

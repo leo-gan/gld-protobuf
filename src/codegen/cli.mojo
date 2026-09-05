@@ -1,9 +1,9 @@
-from std.collections import List, Optional
+from std.collections import Dict, List, Optional
 from std.os.process import Process
 from std.sys import argv
 
 from codegen.emit import emit_file, output_path, stem_of, EmitError
-from codegen.names import mojo_type_name
+from codegen.names import mojo_type_name, safe_stem
 from descriptor.decode import decode_file_descriptor_set
 from descriptor.model import FileDescSet, proto3_error
 
@@ -177,11 +177,12 @@ def main() raises:
     for pi in range(len(protos)):
         emit_names.append(_basename(protos[pi]))
 
+    var init_text = Dict[String, String]()
     for fi in range(len(set.files)):
         var file = set.files[fi].copy()
         var should = len(emit_names) == 0
         for ei in range(len(emit_names)):
-            if file.name == emit_names[ei]:
+            if file.name == emit_names[ei] or _basename(file.name) == emit_names[ei]:
                 should = True
         if not should:
             continue
@@ -190,7 +191,7 @@ def main() raises:
             body = emit_file(set, file.copy(), preserve)
         except e:
             raise Error(e.message)
-        var stem = stem_of(file.name)
+        var stem = safe_stem(file.name)
         var path = output_path(out_dir, module_prefix, file.package, stem)
         _write_text(path, body)
         var exported = List[String]()
@@ -227,10 +228,18 @@ def main() raises:
                     text += ","
                 text += "\n"
             text += ")\n"
-            _write_text(export_dir + "/__init__.mojo", text)
+            if export_dir in init_text:
+                init_text[export_dir] = init_text[export_dir] + text
+            else:
+                init_text[export_dir] = text
             var pkg_dir = _parent_dir(export_dir)
             if pkg_dir != out_dir and pkg_dir != "." and _is_under(pkg_dir, out_dir):
-                _write_text(pkg_dir + "/__init__.mojo", "")
+                if pkg_dir not in init_text:
+                    init_text[pkg_dir] = String()
                 var top = _parent_dir(pkg_dir)
                 if top != out_dir and top != "." and _is_under(top, out_dir):
-                    _write_text(top + "/__init__.mojo", "")
+                    if top not in init_text:
+                        init_text[top] = String()
+
+    for d in init_text:
+        _write_text(d + "/__init__.mojo", init_text[d])

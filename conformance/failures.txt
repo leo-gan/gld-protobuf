@@ -1,0 +1,15 @@
+# Expected official-suite outcomes for binary proto3 only.
+# The adapter skips JSON, JSPB, text, proto2, and editions. The runner still
+# lists those as skipped, not as failures, when the testee returns `skipped`.
+#
+# Recursive TestAllTypesProto3 / NestedMessage.corecursive fields are stored
+# as unknown (Mojo cannot form a Deinitable Optional[Self] cycle). Binary
+# round-trip still works for a single nested record; merge of two recursive
+# LEN records may differ from official field-merge.
+#
+# WKT messages are ordinary generated types, not special codecs. JSON WKT
+# tests are skipped. Binary WKT fields that do not require special codecs
+# should pass.
+#
+# Groups are rejected (KIND_INVALID_WIRE). proto3 TestAllTypesProto3 has no
+# group fields; proto2 group cases are skipped with the proto2 message type.
