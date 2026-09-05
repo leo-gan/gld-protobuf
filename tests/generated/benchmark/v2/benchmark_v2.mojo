@@ -1,7 +1,8 @@
-from std.collections import List, Optional, Span
+from std.collections import Dict, List, Optional, Span
 from protobuf import (
     DecodeError,
     ProtoMessage,
+    UnknownFieldSet,
     WireReader,
     WireType,
     WireWriter,
@@ -9,11 +10,17 @@ from protobuf import (
     encode as pb_encode,
     i32_to_u64,
     i64_to_u64,
+    tag_fixed32_len,
     tag_fixed64_len,
     tag_len_len,
     tag_varint_len,
     u64_to_i32,
     u64_to_i64,
+    varint_len,
+    zigzag_decode_i32,
+    zigzag_decode_i64,
+    zigzag_encode_i32,
+    zigzag_encode_i64,
 )
 
 struct Message(
@@ -27,21 +34,23 @@ struct Message(
     var f_bool_2: Bool
     var f_int32_2: Int32
     var f_string_2: String
+    var unknown: UnknownFieldSet
 
     def __init__(out self):
         self.f_bool = False
-        self.f_int32 = 0
-        self.f_int64 = 0
+        self.f_int32 = Int32(0)
+        self.f_int64 = Int64(0)
         self.f_float64 = 0.0
         self.f_string = String()
         self.f_bool_2 = False
-        self.f_int32_2 = 0
+        self.f_int32_2 = Int32(0)
         self.f_string_2 = String()
+        self.unknown = UnknownFieldSet()
 
     def encoded_len(self) -> Int:
         var n = 0
         if self.f_bool:
-            n += tag_varint_len(1, 1)
+            n += tag_varint_len(1, UInt64(Int(self.f_bool)))
         if self.f_int32 != 0:
             n += tag_varint_len(2, i32_to_u64(self.f_int32))
         if self.f_int64 != 0:
@@ -51,17 +60,18 @@ struct Message(
         if self.f_string.byte_length() != 0:
             n += tag_len_len(5, self.f_string.byte_length())
         if self.f_bool_2:
-            n += tag_varint_len(6, 1)
+            n += tag_varint_len(6, UInt64(Int(self.f_bool_2)))
         if self.f_int32_2 != 0:
             n += tag_varint_len(7, i32_to_u64(self.f_int32_2))
         if self.f_string_2.byte_length() != 0:
             n += tag_len_len(8, self.f_string_2.byte_length())
+        n += self.unknown.encoded_len()
         return n
 
     def encode_to(self, mut enc: WireWriter):
         if self.f_bool:
             enc.write_tag(1, WireType.VARINT)
-            enc.write_varint(1)
+            enc.write_varint(UInt64(Int(self.f_bool)))
         if self.f_int32 != 0:
             enc.write_tag(2, WireType.VARINT)
             enc.write_varint(i32_to_u64(self.f_int32))
@@ -76,13 +86,14 @@ struct Message(
             enc.write_bytes(self.f_string.as_bytes())
         if self.f_bool_2:
             enc.write_tag(6, WireType.VARINT)
-            enc.write_varint(1)
+            enc.write_varint(UInt64(Int(self.f_bool_2)))
         if self.f_int32_2 != 0:
             enc.write_tag(7, WireType.VARINT)
             enc.write_varint(i32_to_u64(self.f_int32_2))
         if self.f_string_2.byte_length() != 0:
             enc.write_len_header(8, self.f_string_2.byte_length())
             enc.write_bytes(self.f_string_2.as_bytes())
+        self.unknown.encode_to(enc)
 
     def merge_from[origin: ImmOrigin](mut self, mut dec: WireReader[origin]) raises DecodeError:
         while dec.remaining() > 0:
@@ -106,7 +117,7 @@ struct Message(
             elif field == 8 and wire == WireType.LEN:
                 self.f_string_2 = dec.read_string()
             else:
-                dec.skip_field(wire)
+                self.unknown.add(field, wire, dec)
 
     def encode(self) -> List[Byte]:
         return pb_encode(self)
@@ -132,6 +143,8 @@ struct Message(
             return False
         if self.f_string_2 != other.f_string_2:
             return False
+        if self.unknown != other.unknown:
+            return False
         return True
 
     def write_to[W: Writer](self, mut writer: W):
@@ -141,20 +154,24 @@ struct BatchMessage(
     Copyable, Movable, Defaultable, Deinitable, Writable, Equatable, ProtoMessage
 ):
     var items: List[Message]
+    var unknown: UnknownFieldSet
 
     def __init__(out self):
         self.items = List[Message]()
+        self.unknown = UnknownFieldSet()
 
     def encoded_len(self) -> Int:
         var n = 0
         for i in range(len(self.items)):
             n += tag_len_len(1, self.items[i].encoded_len())
+        n += self.unknown.encoded_len()
         return n
 
     def encode_to(self, mut enc: WireWriter):
         for i in range(len(self.items)):
             enc.write_len_header(1, self.items[i].encoded_len())
             self.items[i].encode_to(enc)
+        self.unknown.encode_to(enc)
 
     def merge_from[origin: ImmOrigin](mut self, mut dec: WireReader[origin]) raises DecodeError:
         while dec.remaining() > 0:
@@ -167,7 +184,7 @@ struct BatchMessage(
                 item.merge_from(inner)
                 self.items.append(item^)
             else:
-                dec.skip_field(wire)
+                self.unknown.add(field, wire, dec)
 
     def encode(self) -> List[Byte]:
         return pb_encode(self)
@@ -182,6 +199,8 @@ struct BatchMessage(
         for i in range(len(self.items)):
             if self.items[i] != other.items[i]:
                 return False
+        if self.unknown != other.unknown:
+            return False
         return True
 
     def write_to[W: Writer](self, mut writer: W):
@@ -192,10 +211,12 @@ struct DocumentMeta(
 ):
     var region: String
     var version: Int32
+    var unknown: UnknownFieldSet
 
     def __init__(out self):
         self.region = String()
-        self.version = 0
+        self.version = Int32(0)
+        self.unknown = UnknownFieldSet()
 
     def encoded_len(self) -> Int:
         var n = 0
@@ -203,6 +224,7 @@ struct DocumentMeta(
             n += tag_len_len(1, self.region.byte_length())
         if self.version != 0:
             n += tag_varint_len(2, i32_to_u64(self.version))
+        n += self.unknown.encoded_len()
         return n
 
     def encode_to(self, mut enc: WireWriter):
@@ -212,6 +234,7 @@ struct DocumentMeta(
         if self.version != 0:
             enc.write_tag(2, WireType.VARINT)
             enc.write_varint(i32_to_u64(self.version))
+        self.unknown.encode_to(enc)
 
     def merge_from[origin: ImmOrigin](mut self, mut dec: WireReader[origin]) raises DecodeError:
         while dec.remaining() > 0:
@@ -223,7 +246,7 @@ struct DocumentMeta(
             elif field == 2 and wire == WireType.VARINT:
                 self.version = u64_to_i32(dec.read_varint())
             else:
-                dec.skip_field(wire)
+                self.unknown.add(field, wire, dec)
 
     def encode(self) -> List[Byte]:
         return pb_encode(self)
@@ -237,6 +260,8 @@ struct DocumentMeta(
             return False
         if self.version != other.version:
             return False
+        if self.unknown != other.unknown:
+            return False
         return True
 
     def write_to[W: Writer](self, mut writer: W):
@@ -248,11 +273,13 @@ struct DocumentItem(
     var sku: String
     var qty: Int32
     var price_minor: Int64
+    var unknown: UnknownFieldSet
 
     def __init__(out self):
         self.sku = String()
-        self.qty = 0
-        self.price_minor = 0
+        self.qty = Int32(0)
+        self.price_minor = Int64(0)
+        self.unknown = UnknownFieldSet()
 
     def encoded_len(self) -> Int:
         var n = 0
@@ -262,6 +289,7 @@ struct DocumentItem(
             n += tag_varint_len(2, i32_to_u64(self.qty))
         if self.price_minor != 0:
             n += tag_varint_len(3, i64_to_u64(self.price_minor))
+        n += self.unknown.encoded_len()
         return n
 
     def encode_to(self, mut enc: WireWriter):
@@ -274,6 +302,7 @@ struct DocumentItem(
         if self.price_minor != 0:
             enc.write_tag(3, WireType.VARINT)
             enc.write_varint(i64_to_u64(self.price_minor))
+        self.unknown.encode_to(enc)
 
     def merge_from[origin: ImmOrigin](mut self, mut dec: WireReader[origin]) raises DecodeError:
         while dec.remaining() > 0:
@@ -287,7 +316,7 @@ struct DocumentItem(
             elif field == 3 and wire == WireType.VARINT:
                 self.price_minor = u64_to_i64(dec.read_varint())
             else:
-                dec.skip_field(wire)
+                self.unknown.add(field, wire, dec)
 
     def encode(self) -> List[Byte]:
         return pb_encode(self)
@@ -303,6 +332,8 @@ struct DocumentItem(
             return False
         if self.price_minor != other.price_minor:
             return False
+        if self.unknown != other.unknown:
+            return False
         return True
 
     def write_to[W: Writer](self, mut writer: W):
@@ -315,12 +346,14 @@ struct Document(
     var status: Int32
     var meta: Optional[DocumentMeta]
     var items: List[DocumentItem]
+    var unknown: UnknownFieldSet
 
     def __init__(out self):
         self.id = String()
-        self.status = 0
+        self.status = Int32(0)
         self.meta = None
         self.items = List[DocumentItem]()
+        self.unknown = UnknownFieldSet()
 
     def encoded_len(self) -> Int:
         var n = 0
@@ -332,6 +365,7 @@ struct Document(
             n += tag_len_len(3, self.meta.value().encoded_len())
         for i in range(len(self.items)):
             n += tag_len_len(4, self.items[i].encoded_len())
+        n += self.unknown.encoded_len()
         return n
 
     def encode_to(self, mut enc: WireWriter):
@@ -348,6 +382,7 @@ struct Document(
         for i in range(len(self.items)):
             enc.write_len_header(4, self.items[i].encoded_len())
             self.items[i].encode_to(enc)
+        self.unknown.encode_to(enc)
 
     def merge_from[origin: ImmOrigin](mut self, mut dec: WireReader[origin]) raises DecodeError:
         while dec.remaining() > 0:
@@ -369,7 +404,7 @@ struct Document(
                 item.merge_from(inner)
                 self.items.append(item^)
             else:
-                dec.skip_field(wire)
+                self.unknown.add(field, wire, dec)
 
     def encode(self) -> List[Byte]:
         return pb_encode(self)
@@ -393,6 +428,8 @@ struct Document(
         for i in range(len(self.items)):
             if self.items[i] != other.items[i]:
                 return False
+        if self.unknown != other.unknown:
+            return False
         return True
 
     def write_to[W: Writer](self, mut writer: W):
@@ -402,20 +439,24 @@ struct BatchDocument(
     Copyable, Movable, Defaultable, Deinitable, Writable, Equatable, ProtoMessage
 ):
     var items: List[Document]
+    var unknown: UnknownFieldSet
 
     def __init__(out self):
         self.items = List[Document]()
+        self.unknown = UnknownFieldSet()
 
     def encoded_len(self) -> Int:
         var n = 0
         for i in range(len(self.items)):
             n += tag_len_len(1, self.items[i].encoded_len())
+        n += self.unknown.encoded_len()
         return n
 
     def encode_to(self, mut enc: WireWriter):
         for i in range(len(self.items)):
             enc.write_len_header(1, self.items[i].encoded_len())
             self.items[i].encode_to(enc)
+        self.unknown.encode_to(enc)
 
     def merge_from[origin: ImmOrigin](mut self, mut dec: WireReader[origin]) raises DecodeError:
         while dec.remaining() > 0:
@@ -428,7 +469,7 @@ struct BatchDocument(
                 item.merge_from(inner)
                 self.items.append(item^)
             else:
-                dec.skip_field(wire)
+                self.unknown.add(field, wire, dec)
 
     def encode(self) -> List[Byte]:
         return pb_encode(self)
@@ -443,6 +484,8 @@ struct BatchDocument(
         for i in range(len(self.items)):
             if self.items[i] != other.items[i]:
                 return False
+        if self.unknown != other.unknown:
+            return False
         return True
 
     def write_to[W: Writer](self, mut writer: W):
@@ -455,12 +498,14 @@ struct Telemetry(
     var ts: Int64
     var tags: List[String]
     var values: List[Float64]
+    var unknown: UnknownFieldSet
 
     def __init__(out self):
         self.source = String()
-        self.ts = 0
+        self.ts = Int64(0)
         self.tags = List[String]()
         self.values = List[Float64]()
+        self.unknown = UnknownFieldSet()
 
     def encoded_len(self) -> Int:
         var n = 0
@@ -472,6 +517,7 @@ struct Telemetry(
             n += tag_len_len(3, self.tags[i].byte_length())
         if len(self.values) != 0:
             n += tag_len_len(4, len(self.values) * 8)
+        n += self.unknown.encoded_len()
         return n
 
     def encode_to(self, mut enc: WireWriter):
@@ -488,6 +534,7 @@ struct Telemetry(
             enc.write_len_header(4, len(self.values) * 8)
             for i in range(len(self.values)):
                 enc.write_i64_le(UInt64(self.values[i].to_bits()))
+        self.unknown.encode_to(enc)
 
     def merge_from[origin: ImmOrigin](mut self, mut dec: WireReader[origin]) raises DecodeError:
         while dec.remaining() > 0:
@@ -508,7 +555,7 @@ struct Telemetry(
                 for i in range(len(words)):
                     self.values.append(Float64(from_bits=words[i]))
             else:
-                dec.skip_field(wire)
+                self.unknown.add(field, wire, dec)
 
     def encode(self) -> List[Byte]:
         return pb_encode(self)
@@ -532,6 +579,8 @@ struct Telemetry(
         for i in range(len(self.values)):
             if self.values[i] != other.values[i]:
                 return False
+        if self.unknown != other.unknown:
+            return False
         return True
 
     def write_to[W: Writer](self, mut writer: W):
@@ -541,20 +590,24 @@ struct BatchTelemetry(
     Copyable, Movable, Defaultable, Deinitable, Writable, Equatable, ProtoMessage
 ):
     var items: List[Telemetry]
+    var unknown: UnknownFieldSet
 
     def __init__(out self):
         self.items = List[Telemetry]()
+        self.unknown = UnknownFieldSet()
 
     def encoded_len(self) -> Int:
         var n = 0
         for i in range(len(self.items)):
             n += tag_len_len(1, self.items[i].encoded_len())
+        n += self.unknown.encoded_len()
         return n
 
     def encode_to(self, mut enc: WireWriter):
         for i in range(len(self.items)):
             enc.write_len_header(1, self.items[i].encoded_len())
             self.items[i].encode_to(enc)
+        self.unknown.encode_to(enc)
 
     def merge_from[origin: ImmOrigin](mut self, mut dec: WireReader[origin]) raises DecodeError:
         while dec.remaining() > 0:
@@ -567,7 +620,7 @@ struct BatchTelemetry(
                 item.merge_from(inner)
                 self.items.append(item^)
             else:
-                dec.skip_field(wire)
+                self.unknown.add(field, wire, dec)
 
     def encode(self) -> List[Byte]:
         return pb_encode(self)
@@ -582,6 +635,8 @@ struct BatchTelemetry(
         for i in range(len(self.items)):
             if self.items[i] != other.items[i]:
                 return False
+        if self.unknown != other.unknown:
+            return False
         return True
 
     def write_to[W: Writer](self, mut writer: W):
@@ -591,20 +646,24 @@ struct Strings(
     Copyable, Movable, Defaultable, Deinitable, Writable, Equatable, ProtoMessage
 ):
     var items: List[String]
+    var unknown: UnknownFieldSet
 
     def __init__(out self):
         self.items = List[String]()
+        self.unknown = UnknownFieldSet()
 
     def encoded_len(self) -> Int:
         var n = 0
         for i in range(len(self.items)):
             n += tag_len_len(1, self.items[i].byte_length())
+        n += self.unknown.encoded_len()
         return n
 
     def encode_to(self, mut enc: WireWriter):
         for i in range(len(self.items)):
             enc.write_len_header(1, self.items[i].byte_length())
             enc.write_bytes(self.items[i].as_bytes())
+        self.unknown.encode_to(enc)
 
     def merge_from[origin: ImmOrigin](mut self, mut dec: WireReader[origin]) raises DecodeError:
         while dec.remaining() > 0:
@@ -614,7 +673,7 @@ struct Strings(
             if field == 1 and wire == WireType.LEN:
                 self.items.append(dec.read_string())
             else:
-                dec.skip_field(wire)
+                self.unknown.add(field, wire, dec)
 
     def encode(self) -> List[Byte]:
         return pb_encode(self)
@@ -629,6 +688,8 @@ struct Strings(
         for i in range(len(self.items)):
             if self.items[i] != other.items[i]:
                 return False
+        if self.unknown != other.unknown:
+            return False
         return True
 
     def write_to[W: Writer](self, mut writer: W):
@@ -638,20 +699,24 @@ struct BatchStrings(
     Copyable, Movable, Defaultable, Deinitable, Writable, Equatable, ProtoMessage
 ):
     var items: List[Strings]
+    var unknown: UnknownFieldSet
 
     def __init__(out self):
         self.items = List[Strings]()
+        self.unknown = UnknownFieldSet()
 
     def encoded_len(self) -> Int:
         var n = 0
         for i in range(len(self.items)):
             n += tag_len_len(1, self.items[i].encoded_len())
+        n += self.unknown.encoded_len()
         return n
 
     def encode_to(self, mut enc: WireWriter):
         for i in range(len(self.items)):
             enc.write_len_header(1, self.items[i].encoded_len())
             self.items[i].encode_to(enc)
+        self.unknown.encode_to(enc)
 
     def merge_from[origin: ImmOrigin](mut self, mut dec: WireReader[origin]) raises DecodeError:
         while dec.remaining() > 0:
@@ -664,7 +729,7 @@ struct BatchStrings(
                 item.merge_from(inner)
                 self.items.append(item^)
             else:
-                dec.skip_field(wire)
+                self.unknown.add(field, wire, dec)
 
     def encode(self) -> List[Byte]:
         return pb_encode(self)
@@ -679,6 +744,8 @@ struct BatchStrings(
         for i in range(len(self.items)):
             if self.items[i] != other.items[i]:
                 return False
+        if self.unknown != other.unknown:
+            return False
         return True
 
     def write_to[W: Writer](self, mut writer: W):
@@ -689,10 +756,12 @@ struct EventAttr(
 ):
     var key: String
     var value: String
+    var unknown: UnknownFieldSet
 
     def __init__(out self):
         self.key = String()
         self.value = String()
+        self.unknown = UnknownFieldSet()
 
     def encoded_len(self) -> Int:
         var n = 0
@@ -700,6 +769,7 @@ struct EventAttr(
             n += tag_len_len(1, self.key.byte_length())
         if self.value.byte_length() != 0:
             n += tag_len_len(2, self.value.byte_length())
+        n += self.unknown.encoded_len()
         return n
 
     def encode_to(self, mut enc: WireWriter):
@@ -709,6 +779,7 @@ struct EventAttr(
         if self.value.byte_length() != 0:
             enc.write_len_header(2, self.value.byte_length())
             enc.write_bytes(self.value.as_bytes())
+        self.unknown.encode_to(enc)
 
     def merge_from[origin: ImmOrigin](mut self, mut dec: WireReader[origin]) raises DecodeError:
         while dec.remaining() > 0:
@@ -720,7 +791,7 @@ struct EventAttr(
             elif field == 2 and wire == WireType.LEN:
                 self.value = dec.read_string()
             else:
-                dec.skip_field(wire)
+                self.unknown.add(field, wire, dec)
 
     def encode(self) -> List[Byte]:
         return pb_encode(self)
@@ -733,6 +804,8 @@ struct EventAttr(
         if self.key != other.key:
             return False
         if self.value != other.value:
+            return False
+        if self.unknown != other.unknown:
             return False
         return True
 
@@ -747,13 +820,15 @@ struct Event(
     var occurred_at: Int64
     var producer: String
     var attrs: List[EventAttr]
+    var unknown: UnknownFieldSet
 
     def __init__(out self):
         self.event_id = String()
         self.event_type = String()
-        self.occurred_at = 0
+        self.occurred_at = Int64(0)
         self.producer = String()
         self.attrs = List[EventAttr]()
+        self.unknown = UnknownFieldSet()
 
     def encoded_len(self) -> Int:
         var n = 0
@@ -767,6 +842,7 @@ struct Event(
             n += tag_len_len(4, self.producer.byte_length())
         for i in range(len(self.attrs)):
             n += tag_len_len(5, self.attrs[i].encoded_len())
+        n += self.unknown.encoded_len()
         return n
 
     def encode_to(self, mut enc: WireWriter):
@@ -785,6 +861,7 @@ struct Event(
         for i in range(len(self.attrs)):
             enc.write_len_header(5, self.attrs[i].encoded_len())
             self.attrs[i].encode_to(enc)
+        self.unknown.encode_to(enc)
 
     def merge_from[origin: ImmOrigin](mut self, mut dec: WireReader[origin]) raises DecodeError:
         while dec.remaining() > 0:
@@ -805,7 +882,7 @@ struct Event(
                 item.merge_from(inner)
                 self.attrs.append(item^)
             else:
-                dec.skip_field(wire)
+                self.unknown.add(field, wire, dec)
 
     def encode(self) -> List[Byte]:
         return pb_encode(self)
@@ -828,6 +905,8 @@ struct Event(
         for i in range(len(self.attrs)):
             if self.attrs[i] != other.attrs[i]:
                 return False
+        if self.unknown != other.unknown:
+            return False
         return True
 
     def write_to[W: Writer](self, mut writer: W):
@@ -837,20 +916,24 @@ struct BatchEvent(
     Copyable, Movable, Defaultable, Deinitable, Writable, Equatable, ProtoMessage
 ):
     var items: List[Event]
+    var unknown: UnknownFieldSet
 
     def __init__(out self):
         self.items = List[Event]()
+        self.unknown = UnknownFieldSet()
 
     def encoded_len(self) -> Int:
         var n = 0
         for i in range(len(self.items)):
             n += tag_len_len(1, self.items[i].encoded_len())
+        n += self.unknown.encoded_len()
         return n
 
     def encode_to(self, mut enc: WireWriter):
         for i in range(len(self.items)):
             enc.write_len_header(1, self.items[i].encoded_len())
             self.items[i].encode_to(enc)
+        self.unknown.encode_to(enc)
 
     def merge_from[origin: ImmOrigin](mut self, mut dec: WireReader[origin]) raises DecodeError:
         while dec.remaining() > 0:
@@ -863,7 +946,7 @@ struct BatchEvent(
                 item.merge_from(inner)
                 self.items.append(item^)
             else:
-                dec.skip_field(wire)
+                self.unknown.add(field, wire, dec)
 
     def encode(self) -> List[Byte]:
         return pb_encode(self)
@@ -878,6 +961,8 @@ struct BatchEvent(
         for i in range(len(self.items)):
             if self.items[i] != other.items[i]:
                 return False
+        if self.unknown != other.unknown:
+            return False
         return True
 
     def write_to[W: Writer](self, mut writer: W):

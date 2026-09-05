@@ -9,6 +9,7 @@ def test_flatten_and_reserved() raises:
     assert_equal(mojo_type_name("List"), "List_")
     assert_equal(mojo_type_name("Message"), "Message")
     assert_equal(mojo_field_name("var"), "`var`")
+    assert_equal(mojo_field_name("unknown"), "unknown_")
     assert_equal(mojo_field_name("f_int32"), "f_int32")
 
 

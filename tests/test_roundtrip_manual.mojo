@@ -98,7 +98,8 @@ def test_message_skip_unknown() raises:
     var buf = enc^.finish()
     var got = Message.decode(buf)
     assert_equal(got.f_bool, True)
-    # re-encode drops field 99 (v0.1 skip-unknown deviation)
+    # Hand-written Message still skips unknowns. Generated types preserve
+    # them; see tests/test_features.mojo.
     var out = got.encode()
     var want = bytes_of(0x08, 0x01)
     assert_equal(len(out), 2)

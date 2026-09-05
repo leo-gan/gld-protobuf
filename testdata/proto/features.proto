@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package features;
+
+message Holder {
+  oneof payload {
+    string name = 1;
+    int32 id = 2;
+  }
+  map<string, int32> attrs = 3;
+  map<int32, string> labels = 4;
+}

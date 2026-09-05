@@ -59,11 +59,12 @@ Ubuntu, or any 3.21+ release).
 | `--proto FILE` | Which file in the set to emit (basename) |
 | `--proto-path DIR` | `-I` when the CLI runs `protoc` |
 | `--module-prefix P` | Extra directory under `--out`, prepended once |
-| `--unknown skip` | v0.1 only; unknown fields are dropped |
+| `--unknown preserve` | Default. Store unknown records and write them back |
+| `--unknown skip` | Drop unknown fields on re-encode (official proto3 deviation) |
 
-v0.1 codegen emits `bool`, `int32`, `int64`, `double`, `string`, nested
-messages, and packed `repeated double`. Maps, oneof, proto2, and services
-fail the CLI with a message on stderr.
+Codegen emits proto3 scalars, enums, nested messages, packed and unpacked
+repeated fields, `oneof`, `map`, and proto3 `optional`. Groups, proto2
+`required`, editions, and services fail the CLI with a message on stderr.
 
 ---
 

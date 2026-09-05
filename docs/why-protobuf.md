@@ -65,12 +65,9 @@ There is no reflection codec. Mojo can list struct fields, but it cannot
 see protobuf field numbers or the difference between `int32` and `sint32`.
 Those facts live in the generated methods.
 
-!!! warning "Unknown fields in v0.1"
-
-    Unknown fields are **skipped and dropped** on re-encode. Official proto3
-    libraries preserve them. That is a documented deviation and is planned to
-    change. Do not use this library as a schema-evolution proxy until
-    preservation ships.
+Generated types **preserve** unknown fields and write them back on encode.
+Pass `--unknown skip` to `gld-protoc-mojo` only if you want the old drop
+behavior.
 
 ---
 

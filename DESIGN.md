@@ -33,6 +33,7 @@ Mojo 1.0 shipped on 2026-08-11 (Modular 26.5) with source stability, ownership, 
 - Phase 0 (wire + hand-written test messages) is implemented.
 - Phase 1 (`FileDescriptorSet` decoder) is implemented in `src/descriptor/`.
 - Phase 2 (`gld-protoc-mojo`) is implemented in `src/codegen/`.
+- Phase 3 (remaining scalars, enums, `oneof`, maps, unknown preserve default) is implemented.
 - `temp/impl_plan.md` is gitignored local scratch, not a shipped artifact.
 - Test message types live in `testdata/proto/`. This library does not depend on any other repository.
 
@@ -629,7 +630,7 @@ Then:
 3. Emit only for files listed on `--proto` (or, in `--descriptor-set` mode, files whose `name` matches `--emit NAME` / default: all proto3 files that are not `google/protobuf/*.proto`). Imports stay in the set so `type_name` can be resolved.
 4. Write Mojo sources under `--out`.
 
-Until Phase 3 unknown-preserve ships, the CLI behaves as `--unknown skip` and prints a one-line warning that this **deviates** from official proto3. After that PR, default is `--unknown preserve`.
+The CLI default is `--unknown preserve`. `--unknown skip` prints a one-line warning that it **deviates** from official proto3.
 
 #### Output-path algorithm (locked)
 
