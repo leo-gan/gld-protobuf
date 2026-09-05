@@ -15,11 +15,42 @@ Documentation: [Why ProtoBuf](https://leo-gan.github.io/gld-protobuf/why-protobu
 [Instructions](https://leo-gan.github.io/gld-protobuf/instructions/),
 [Examples](https://leo-gan.github.io/gld-protobuf/examples/).
 
+## Install
+
+From a git checkout (development):
+
+```bash
+git clone https://github.com/leo-gan/gld-protobuf.git
+cd gld-protobuf
+pixi install
+pixi run test
+```
+
+To consume the library as precompiled packages plus the codegen CLI:
+
+```bash
+pixi run precompile          # writes /tmp/mojo-protobuf-pkg/{protobuf,wire,runtime}.mojoc
+                             # and gld-protoc-mojo
+```
+
+`from protobuf import …` then resolves from that directory (`mojo run -I /tmp/mojo-protobuf-pkg …`) or, after a conda install, from `$PREFIX/lib/mojo/` with no extra `-I`.
+
+The conda recipe is `conda.recipe/recipe.yaml` (package name `mojo-protobuf`, pin `mojo-compiler ==1.0.0`). Build with [rattler-build](https://prefix-dev.github.io/rattler-build/):
+
+```bash
+rattler-build build \
+  --recipe conda.recipe/recipe.yaml \
+  -c conda-forge \
+  -c https://conda.modular.com/max
+```
+
+That install puts `protobuf.mojoc` (and `wire` / `runtime`) in `$PREFIX/lib/mojo/` and `gld-protoc-mojo` on `PATH`.
+
 ## Status
 
-Phases 0–4 are implemented: wire format, `FileDescriptorSet` decoder,
-`gld-protoc-mojo` for proto3 messages (scalars, enums, `oneof`, maps),
-unknown-field preservation, and a binary `conformance_test_runner` adapter.
+Phases 0–5 are implemented: wire format, `FileDescriptorSet` decoder,
+`gld-protoc-mojo` for proto3 messages, unknown-field preservation, a binary
+conformance adapter, and a conda recipe that precompiles `protobuf.mojoc`.
 See [DESIGN.md](DESIGN.md).
 
 ```bash
@@ -64,4 +95,6 @@ mojo run -I src tests/test_varint.mojo
 
 ## License
 
-MIT. Official Protocol Buffers is BSD-3-Clause; the licenses are not the same.
+MIT. Copyright (c) 2026 Leonid Ganeline.
+
+Official Protocol Buffers is BSD-3-Clause; the licenses are not the same.

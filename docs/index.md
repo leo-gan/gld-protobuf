@@ -51,6 +51,7 @@ other C, C++, or Rust protobuf library.
 | Unknown fields | Generated types keep unknown records and write them back. `--unknown skip` is opt-in. |
 | Interop | Golden vectors come from official `protoc --encode`. `tests_interop/` pipes the same bytes. |
 | Conformance | `conformance/adapter.mojo` uses uint32-LE framing. Binary proto3 `TestAllTypesProto3` only. |
+| Package | `conda.recipe/recipe.yaml` precompiles `protobuf.mojoc` and installs `gld-protoc-mojo`. |
 | proto3 types | All proto3 scalars, enums, nested messages, packed and unpacked repeated, `oneof`, `map`, proto3 `optional`. |
 
 `protoc` is a **build-time** host tool. Python `google.protobuf` is a **test

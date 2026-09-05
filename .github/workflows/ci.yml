@@ -21,6 +21,10 @@ jobs:
         run: pixi run test
         env:
           PREFIX_API_KEY: ${{ secrets.PREFIX_API_KEY }}
+      - name: Precompile package
+        run: pixi run precompile && pixi run mojo run -I /tmp/mojo-protobuf-pkg conda.recipe/test_import.mojo
+        env:
+          PREFIX_API_KEY: ${{ secrets.PREFIX_API_KEY }}
 
   docs:
     name: Docs build
