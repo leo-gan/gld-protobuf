@@ -1,0 +1,3 @@
+syntax = "proto2";
+package legacy;
+message Box { optional int32 n = 1; }

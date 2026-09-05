@@ -30,8 +30,10 @@ Mojo 1.0 shipped on 2026-08-11 (Modular 26.5) with source stability, ownership, 
 
 ### Current state of the repo
 
-- `/home/leo/PycharmProjects/GLD/gld-protobuf` has no product source. The only file present is `temp/impl_plan.md`, which is **gitignored local scratch** (`.gitignore` contains `temp/`). It is prior-art input for this document, not a shipped artifact.
-- Similar proto3 message shapes (`Message`, `Document`, `Telemetry`, `Strings`, `Event`, `Batch_*`) exist in a local benchmark repo and were used as a **source of test message types**. Those types are copied into *this* repo’s `testdata/proto/`. This library does not depend on that repo.
+- Phase 0 (wire + hand-written test messages) is implemented.
+- Phase 1 (`FileDescriptorSet` decoder) is implemented in `src/descriptor/`.
+- `temp/impl_plan.md` is gitignored local scratch, not a shipped artifact.
+- Test message types live in `testdata/proto/`. This library does not depend on any other repository.
 
 ### Pain points this library must not inherit
 
@@ -1228,6 +1230,7 @@ PRs land in `/home/leo/PycharmProjects/GLD/gld-protobuf` unless noted. Each is i
 
 #### PR 6 — Hand-written `FileDescriptorSet` decoder
 
+- **Status:** implemented (this PR)
 - **Title:** `feat(descriptor): bootstrap-decode FileDescriptorSet`
 - **Files:** `src/descriptor/{model,decode}.mojo`, `tests/test_descriptor.mojo`, `testdata/descriptors/*.bin` (from `protoc --descriptor_set_out --include_imports`).
 - **Depends on:** PR 3 (only needs Layer 1; can overlap PR 4–5).
