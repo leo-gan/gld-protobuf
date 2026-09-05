@@ -33,6 +33,15 @@ other C, C++, or Rust protobuf library.
 
     [:octicons-arrow-right-24: See Examples](examples.md)
 
+-   __Test data__
+
+    ---
+
+    What lives under `testdata/` (schemas, oracle bytes, descriptor blobs,
+    official conformance inputs) and why each file is there.
+
+    [:octicons-arrow-right-24: Read Test data](test-data.md)
+
 </div>
 
 ---
@@ -51,7 +60,7 @@ other C, C++, or Rust protobuf library.
 | Unknown fields | Generated types keep unknown records and write them back. `--unknown skip` is opt-in. |
 | Interop | Golden vectors come from official `protoc --encode`. `tests_interop/` pipes the same bytes. |
 | Conformance | `conformance/adapter.mojo` uses uint32-LE framing. Binary proto3 `TestAllTypesProto3` only. |
-| Package | `conda.recipe/recipe.yaml` precompiles `protobuf.mojoc` and installs `gld-protoc-mojo`. |
+| Package | `mojo-protobuf` on [prefix.dev/leo-gan/leo-gan](https://prefix.dev/leo-gan/leo-gan). `pixi add --channel https://prefix.dev/leo-gan/leo-gan mojo-protobuf`. |
 | proto3 types | All proto3 scalars, enums, nested messages, packed and unpacked repeated, `oneof`, `map`, proto3 `optional`. |
 
 `protoc` is a **build-time** host tool. Python `google.protobuf` is a **test
