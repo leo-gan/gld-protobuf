@@ -24,7 +24,7 @@ fi
 fail=0
 for f in "${files[@]}"; do
   echo "=== ${f#"$root"/} ==="
-  if ! "${MOJO[@]}" run -I src -I tests "$f"; then
+  if ! "${MOJO[@]}" run -I src -I tests -I tests/generated "$f"; then
     fail=1
   fi
 done
