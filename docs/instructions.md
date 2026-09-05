@@ -27,6 +27,18 @@ pixi run mojo --version   # expect Mojo 1.0.0
 For codegen, install `protoc` (the `protobuf-compiler` package on Debian and
 Ubuntu, or any 3.21+ release).
 
+### Precompiled package
+
+`pixi run precompile` writes `wire.mojoc`, `runtime.mojoc`, `protobuf.mojoc`,
+and the `gld-protoc-mojo` binary (default output `/tmp/mojo-protobuf-pkg`).
+The conda recipe `conda.recipe/recipe.yaml` installs those artifacts under
+`$PREFIX/lib/mojo/` and `$PREFIX/bin`. It pins `mojo-compiler ==1.0.0`.
+
+```bash
+pixi run precompile
+mojo run -I /tmp/mojo-protobuf-pkg your_app.mojo
+```
+
 ---
 
 ## Generate Mojo from a `.proto` file

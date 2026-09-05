@@ -3,7 +3,7 @@
 | Field | Value |
 | --- | --- |
 | **Document title** | Protocol Buffers serializer for the Mojo programming language |
-| **Author** | TBD |
+| **Author** | Leonid Ganeline |
 | **Date** | 2026-09-05 |
 | **Status** | Draft (rev 5) |
 | **Target repo** | `/home/leo/PycharmProjects/GLD/gld-protobuf` (greenfield standalone library; only gitignored `temp/` scratch as of 2026-09-05) |
@@ -35,6 +35,7 @@ Mojo 1.0 shipped on 2026-08-11 (Modular 26.5) with source stability, ownership, 
 - Phase 2 (`gld-protoc-mojo`) is implemented in `src/codegen/`.
 - Phase 3 (remaining scalars, enums, `oneof`, maps, unknown preserve default) is implemented.
 - Phase 4 (official binary conformance adapter, uint32 LE framing) is implemented.
+- Phase 5 (conda recipe + `mojo precompile` of the published packages + CLI binary) is implemented.
 - `temp/impl_plan.md` is gitignored local scratch, not a shipped artifact.
 - Test message types live in `testdata/proto/`. This library does not depend on any other repository.
 
