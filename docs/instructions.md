@@ -1,7 +1,7 @@
 # Instructions
 
 These steps install the library, generate Mojo from a `.proto` file, and run
-the tests. The runtime needs **Mojo 1.0.0**. Code generation also needs
+the tests. The runtime needs **Mojo 1.1.0**. Code generation also needs
 `protoc` on the host. `protoc` is not linked into the Mojo binary.
 
 ---
@@ -27,7 +27,7 @@ A GitHub Release on this repository builds `conda.recipe/recipe.yaml` and upload
 git clone https://github.com/leo-gan/gld-protobuf.git
 cd gld-protobuf
 pixi install
-pixi run mojo --version   # expect Mojo 1.0.0
+pixi run mojo --version   # expect Mojo 1.1.0
 ```
 
 !!! note "Modular channel token"
@@ -44,7 +44,7 @@ Ubuntu, or any 3.21+ release).
 `pixi run precompile` writes `wire.mojoc`, `runtime.mojoc`, `protobuf.mojoc`,
 and the `gld-protoc-mojo` binary (default output `/tmp/mojo-protobuf-pkg`).
 The conda recipe `conda.recipe/recipe.yaml` installs those artifacts under
-`$PREFIX/lib/mojo/` and `$PREFIX/bin`. It pins `mojo-compiler ==1.0.0`.
+`$PREFIX/lib/mojo/` and `$PREFIX/bin`. It pins `mojo-compiler ==1.1.0`.
 
 ```bash
 pixi run precompile

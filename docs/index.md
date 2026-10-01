@@ -19,7 +19,7 @@ other C, C++, or Rust protobuf library.
 
     ---
 
-    Install Mojo 1.0.0 with pixi, generate Mojo from a `.proto` file, run the
+    Install Mojo 1.1.0 with pixi, generate Mojo from a `.proto` file, run the
     tests, and publish this site.
 
     [:octicons-arrow-right-24: Open Instructions](instructions.md)
@@ -91,7 +91,7 @@ Run the suite:
 pixi run test
 ```
 
-Requires **Mojo 1.0.0**. If `pixi install` fails on `conda.modular.com`, see
+Requires **Mojo 1.1.0**. If `pixi install` fails on `conda.modular.com`, see
 [Instructions](instructions.md).
 
 ---
