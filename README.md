@@ -57,7 +57,7 @@ See [DESIGN.md](DESIGN.md).
 pixi run generate    # testdata/proto/benchmark_v2.proto → tests/generated/
 ```
 
-Requires **Mojo 1.0.0**.
+Requires **Mojo 1.1.0**.
 
 ## Layout
 

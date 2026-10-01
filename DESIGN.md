@@ -8,7 +8,7 @@
 | **Status** | Draft (rev 5) |
 | **Target repo** | `/home/leo/PycharmProjects/GLD/gld-protobuf` (greenfield standalone library; only gitignored `temp/` scratch as of 2026-09-05) |
 | **License** | MIT |
-| **Recommended Mojo pin** | `mojo == 1.0.0` (stable, 2026-08-11; nightly is `1.1.0.dev*` as of 2026-09-03) |
+| **Recommended Mojo pin** | `mojo == 1.1.0` (stable, 2026-09-17) |
 
 ---
 
