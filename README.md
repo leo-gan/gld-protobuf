@@ -1,5 +1,7 @@
 # mojo-protobuf
 
+[Serialization](https://leo-gan.github.io/serialization/) is the hub for the theory, the history, and the benchmarks.
+
 A from-scratch Protocol Buffers implementation for [Mojo](https://mojolang.org/).
 The runtime and the code generator are written in Mojo. They do not wrap, link,
 or vendor libprotobuf, protobuf-c, nanopb, protozero, prost, or any other C,
